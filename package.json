@@ -22,7 +22,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/devongovett/tiny-inflate.git"
+    "url": "git://github.com/quarksb/tiny-inflate.git"
   },
   "keywords": [
     "inflate",
@@ -30,12 +30,12 @@
     "gzip",
     "zip"
   ],
-  "author": "Devon Govett <devongovett@gmail.com>",
+  "author": "quarkcao <https://github.com/quarksb>",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/devongovett/tiny-inflate/issues"
+    "url": "https://github.com/quarksb/tiny-inflate/issues"
   },
-  "homepage": "https://github.com/devongovett/tiny-inflate",
+  "homepage": "https://github.com/quarksb/tiny-inflate",
   "devDependencies": {
   },
   "peerDependencies": {
