@@ -15,6 +15,7 @@
   "scripts": {
     "test": "bun test",
     "build": "bun build ./index.ts --outdir ./dist --minify",
+    "pub": "npm publish",
     "prepublishOnly": "bun run build && bun test"
   },
   "publishConfig": {
