@@ -1,10 +1,14 @@
 {
   "name": "tiny-inflate",
-  "version": "1.0.3",
+  "version": "1.1.0",
   "description": "A tiny inflate implementation",
-  "main": "index.js",
+  "type": "module",
+  "main": "./index.ts",
+  "module": "./index.ts",
+  "types": "./index.ts",
   "scripts": {
-    "test": "mocha"
+    "test": "bun test",
+    "build": "bun build ./index.ts --outdir ./dist --minify"
   },
   "repository": {
     "type": "git",
@@ -23,6 +27,8 @@
   },
   "homepage": "https://github.com/devongovett/tiny-inflate",
   "devDependencies": {
-    "mocha": "^2.1.0"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
   }
 }

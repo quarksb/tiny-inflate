@@ -1,29 +1,51 @@
 # tiny-inflate
 
-This is a port of Joergen Ibsen's [tiny inflate](https://bitbucket.org/jibsen/tinf) to JavaScript.
-Minified it is about 3KB, or 1.3KB gzipped. While being very small, it is also reasonably fast
-(about 30% - 50% slower than [pako](https://github.com/nodeca/pako) on average), and should be 
-good enough for many applications. If you need the absolute best performance, however, you'll
-need to use a larger library such as pako that contains additional optimizations.
+This is a port of Joergen Ibsen's [tiny inflate](https://bitbucket.org/jibsen/tinf) to TypeScript/ESM.
+Minified it is about 3KB. While being very small, it is also reasonably fast (about 30% - 50% slower than [pako](https://github.com/nodeca/pako) on average), and should be good enough for many applications.
+
+## Features
+
+- **Tiny**: ~3KB minified.
+- **Modern**: Written in TypeScript with ESM support.
+- **Fast**: Optimized for Bun and modern JS engines.
+- **Zero Dependencies**: Core logic has no external dependencies.
 
 ## Installation
 
-    npm install tiny-inflate
+```bash
+bun add tiny-inflate
+# or
+npm install tiny-inflate
+```
 
 ## Example
 
-To use tiny-inflate, you need two things: a buffer of data compressed with deflate,
-and the decompressed size (often stored in a file header) to allocate your output buffer.
-Input and output buffers can be either node `Buffer`s, or `Uint8Array`s.
+To use tiny-inflate, you need two things: a buffer of data compressed with deflate, and the decompressed size to allocate your output buffer. Input and output buffers can be `Uint8Array` or Node.js `Buffer`.
 
-```javascript
-var inflate = require('tiny-inflate');
+```typescript
+import inflate from 'tiny-inflate';
 
-var compressedBuffer = new Bufer([ ... ]);
-var decompressedSize = ...;
-var outputBuffer = new Buffer(decompressedSize);
+const compressed = new Uint8Array([ ... ]);
+const decompressedSize = 1024;
+const output = new Uint8Array(decompressedSize);
 
-inflate(compressedBuffer, outputBuffer);
+const result = inflate(compressed, output);
+// result is a subarray of output with the actual decompressed length
+```
+
+## Development
+
+This project uses [Bun](https://bun.sh) for development, testing, and building.
+
+```bash
+# Install dependencies
+bun install
+
+# Run tests
+bun test
+
+# Build for production
+bun run build
 ```
 
 ## License

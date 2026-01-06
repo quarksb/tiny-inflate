@@ -1,2 +1,16 @@
 node_modules/
 coverage/
+
+# Bun
+bun.lockb
+.bun-build
+
+# Build output
+dist/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.log
+.DS_Store

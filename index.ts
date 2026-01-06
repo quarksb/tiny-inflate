@@ -1,57 +1,86 @@
-var TINF_OK = 0;
-var TINF_DATA_ERROR = -3;
+const TINF_OK = 0;
+const TINF_DATA_ERROR = -3;
 
-function Tree() {
-  this.table = new Uint16Array(16);   /* table of code length counts */
-  this.trans = new Uint16Array(288);  /* code -> symbol translation table */
+/**
+ * Represents a Huffman tree for decoding.
+ */
+class Tree {
+  /** Table of code length counts */
+  table: Uint16Array = new Uint16Array(16);
+  /** Code to symbol translation table */
+  trans: Uint16Array = new Uint16Array(288);
 }
 
-function Data(source, dest) {
-  this.source = source;
-  this.sourceIndex = 0;
-  this.tag = 0;
-  this.bitcount = 0;
+/**
+ * State object for the inflation process.
+ */
+class Data {
+  /** Source compressed data */
+  source: Uint8Array;
+  /** Current index in the source data */
+  sourceIndex: number = 0;
+  /** Current bit tag buffer */
+  tag: number = 0;
+  /** Number of bits remaining in the tag */
+  bitcount: number = 0;
   
-  this.dest = dest;
-  this.destLen = 0;
+  /** Destination buffer for decompressed data */
+  dest: Uint8Array;
+  /** Current length of decompressed data in the destination buffer */
+  destLen: number = 0;
   
-  this.ltree = new Tree();  /* dynamic length/symbol tree */
-  this.dtree = new Tree();  /* dynamic distance tree */
+  /** Dynamic length/symbol Huffman tree */
+  ltree: Tree = new Tree();
+  /** Dynamic distance Huffman tree */
+  dtree: Tree = new Tree();
+
+  constructor(source: Uint8Array, dest: Uint8Array) {
+    this.source = source;
+    this.dest = dest;
+  }
 }
 
 /* --------------------------------------------------- *
  * -- uninitialized global data (static structures) -- *
  * --------------------------------------------------- */
 
-var sltree = new Tree();
-var sdtree = new Tree();
+const sltree = new Tree();
+const sdtree = new Tree();
 
 /* extra bits and base tables for length codes */
-var length_bits = new Uint8Array(30);
-var length_base = new Uint16Array(30);
+const length_bits = new Uint8Array(30);
+const length_base = new Uint16Array(30);
 
 /* extra bits and base tables for distance codes */
-var dist_bits = new Uint8Array(30);
-var dist_base = new Uint16Array(30);
+const dist_bits = new Uint8Array(30);
+const dist_base = new Uint16Array(30);
 
 /* special ordering of code length codes */
-var clcidx = new Uint8Array([
+const clcidx = new Uint8Array([
   16, 17, 18, 0, 8, 7, 9, 6,
   10, 5, 11, 4, 12, 3, 13, 2,
   14, 1, 15
 ]);
 
 /* used by tinf_decode_trees, avoids allocations every call */
-var code_tree = new Tree();
-var lengths = new Uint8Array(288 + 32);
+const code_tree = new Tree();
+const lengths = new Uint8Array(288 + 32);
 
 /* ----------------------- *
  * -- utility functions -- *
  * ----------------------- */
 
 /* build extra bits and base tables */
-function tinf_build_bits_base(bits, base, delta, first) {
-  var i, sum;
+/**
+ * Builds extra bits and base tables for length and distance codes.
+ * 
+ * @param bits - Array to store extra bits.
+ * @param base - Array to store base values.
+ * @param delta - Increment value for bit calculation.
+ * @param first - First base value.
+ */
+function tinf_build_bits_base(bits: Uint8Array, base: Uint16Array, delta: number, first: number) {
+  let i: number, sum: number;
 
   /* build bits table */
   for (i = 0; i < delta; ++i) bits[i] = 0;
@@ -65,8 +94,14 @@ function tinf_build_bits_base(bits, base, delta, first) {
 }
 
 /* build the fixed huffman trees */
-function tinf_build_fixed_trees(lt, dt) {
-  var i;
+/**
+ * Builds the fixed Huffman trees as specified in RFC 1951.
+ * 
+ * @param lt - The length tree to build.
+ * @param dt - The distance tree to build.
+ */
+function tinf_build_fixed_trees(lt: Tree, dt: Tree) {
+  let i: number;
 
   /* build fixed length tree */
   for (i = 0; i < 7; ++i) lt.table[i] = 0;
@@ -89,28 +124,47 @@ function tinf_build_fixed_trees(lt, dt) {
 }
 
 /* given an array of code lengths, build a tree */
-var offs = new Uint16Array(16);
+const offs = new Uint16Array(16);
 
-function tinf_build_tree(t, lengths, off, num) {
-  var i, sum;
+/**
+ * Builds a Huffman tree from an array of code lengths.
+ * 
+ * @param t - The tree to build.
+ * @param lengths - Array of code lengths.
+ * @param off - Offset in the lengths array.
+ * @param num - Number of symbols.
+ */
+function tinf_build_tree(t: Tree, lengths: Uint8Array, off: number, num: number) {
+  let i: number, sum: number;
 
   /* clear code length count table */
   for (i = 0; i < 16; ++i) t.table[i] = 0;
 
   /* scan symbol lengths, and sum code length counts */
-  for (i = 0; i < num; ++i) t.table[lengths[off + i]]++;
+  for (i = 0; i < num; ++i) {
+    const len = lengths[off + i];
+    if (len !== undefined) t.table[len]++;
+  }
 
   t.table[0] = 0;
 
   /* compute offset table for distribution sort */
   for (sum = 0, i = 0; i < 16; ++i) {
     offs[i] = sum;
-    sum += t.table[i];
+    const count = t.table[i];
+    if (count !== undefined) sum += count;
   }
 
   /* create code->symbol translation table (symbols sorted by code) */
   for (i = 0; i < num; ++i) {
-    if (lengths[off + i]) t.trans[offs[lengths[off + i]]++] = i;
+    const len = lengths[off + i];
+    if (len) {
+        const offVal = offs[len];
+        if (offVal !== undefined) {
+            t.trans[offVal] = i;
+            offs[len]++;
+        }
+    }
   }
 }
 
@@ -119,7 +173,13 @@ function tinf_build_tree(t, lengths, off, num) {
  * ---------------------- */
 
 /* get one bit from source stream */
-function tinf_getbit(d) {
+/**
+ * Reads a single bit from the bitstream.
+ * 
+ * @param d - The inflation state.
+ * @returns The bit value (0 or 1).
+ */
+function tinf_getbit(d: Data) {
   /* check if tag is empty */
   if (!d.bitcount--) {
     /* load next tag */
@@ -128,37 +188,52 @@ function tinf_getbit(d) {
   }
 
   /* shift bit out of tag */
-  var bit = d.tag & 1;
+  const bit = d.tag & 1;
   d.tag >>>= 1;
 
   return bit;
 }
 
 /* read a num bit value from a stream and add base */
-function tinf_read_bits(d, num, base) {
+/**
+ * Reads a specified number of bits from the bitstream and adds a base value.
+ * 
+ * @param d - The inflation state.
+ * @param num - Number of bits to read.
+ * @param base - Base value to add to the result.
+ * @returns The resulting value.
+ */
+function tinf_read_bits(d: Data, num: number, base: number) {
   if (!num)
     return base;
 
   while (d.bitcount < 24) {
-    d.tag |= d.source[d.sourceIndex++] << d.bitcount;
+    d.tag |= (d.source[d.sourceIndex++]) << d.bitcount;
     d.bitcount += 8;
   }
 
-  var val = d.tag & (0xffff >>> (16 - num));
+  const val = d.tag & (0xffff >>> (16 - num));
   d.tag >>>= num;
   d.bitcount -= num;
   return val + base;
 }
 
 /* given a data stream and a tree, decode a symbol */
-function tinf_decode_symbol(d, t) {
+/**
+ * Decodes a symbol from the bitstream using the provided Huffman tree.
+ * 
+ * @param d - The inflation state.
+ * @param t - The Huffman tree to use for decoding.
+ * @returns The decoded symbol.
+ */
+function tinf_decode_symbol(d: Data, t: Tree): number {
   while (d.bitcount < 24) {
-    d.tag |= d.source[d.sourceIndex++] << d.bitcount;
+    d.tag |= (d.source[d.sourceIndex++]) << d.bitcount;
     d.bitcount += 8;
   }
   
-  var sum = 0, cur = 0, len = 0;
-  var tag = d.tag;
+  let sum = 0, cur = 0, len = 0;
+  let tag = d.tag;
 
   /* get more bits while code value is above sum */
   do {
@@ -166,8 +241,11 @@ function tinf_decode_symbol(d, t) {
     tag >>>= 1;
     ++len;
 
-    sum += t.table[len];
-    cur -= t.table[len];
+    const count = t.table[len];
+    if (count !== undefined) {
+        sum += count;
+        cur -= count;
+    }
   } while (cur >= 0);
   
   d.tag = tag;
@@ -177,9 +255,16 @@ function tinf_decode_symbol(d, t) {
 }
 
 /* given a data stream, decode dynamic trees from it */
-function tinf_decode_trees(d, lt, dt) {
-  var hlit, hdist, hclen;
-  var i, num, length;
+/**
+ * Decodes dynamic Huffman trees from the bitstream.
+ * 
+ * @param d - The inflation state.
+ * @param lt - The length tree to build.
+ * @param dt - The distance tree to build.
+ */
+function tinf_decode_trees(d: Data, lt: Tree, dt: Tree) {
+  let hlit, hdist, hclen;
+  let i, num, length;
 
   /* get 5 bits HLIT (257-286) */
   hlit = tinf_read_bits(d, 5, 257);
@@ -195,8 +280,9 @@ function tinf_decode_trees(d, lt, dt) {
   /* read code lengths for code length alphabet */
   for (i = 0; i < hclen; ++i) {
     /* get 3 bits code length (0-7) */
-    var clen = tinf_read_bits(d, 3, 0);
-    lengths[clcidx[i]] = clen;
+    const clen = tinf_read_bits(d, 3, 0);
+    const idx = clcidx[i];
+    if (idx !== undefined) lengths[idx] = clen;
   }
 
   /* build code length tree */
@@ -204,12 +290,14 @@ function tinf_decode_trees(d, lt, dt) {
 
   /* decode code lengths for the dynamic trees */
   for (num = 0; num < hlit + hdist;) {
-    var sym = tinf_decode_symbol(d, code_tree);
+    const symInRange = tinf_decode_symbol(d, code_tree);
+    if (symInRange === undefined) break;
+    const sym = symInRange;
 
     switch (sym) {
       case 16:
         /* copy previous code length 3-6 times (read 2 bits) */
-        var prev = lengths[num - 1];
+        const prev = lengths[num - 1]!;
         for (length = tinf_read_bits(d, 2, 3); length; --length) {
           lengths[num++] = prev;
         }
@@ -243,9 +331,17 @@ function tinf_decode_trees(d, lt, dt) {
  * ----------------------------- */
 
 /* given a stream and two trees, inflate a block of data */
-function tinf_inflate_block_data(d, lt, dt) {
+/**
+ * Inflates a block of compressed data using the provided trees.
+ * 
+ * @param d - The inflation state.
+ * @param lt - The length Huffman tree.
+ * @param dt - The distance Huffman tree.
+ * @returns TINF_OK (0) on success.
+ */
+function tinf_inflate_block_data(d: Data, lt: Tree, dt: Tree) {
   while (1) {
-    var sym = tinf_decode_symbol(d, lt);
+    const sym = tinf_decode_symbol(d, lt);
 
     /* check for end of block */
     if (sym === 256) {
@@ -255,21 +351,21 @@ function tinf_inflate_block_data(d, lt, dt) {
     if (sym < 256) {
       d.dest[d.destLen++] = sym;
     } else {
-      var length, dist, offs;
-      var i;
+      let length: number, dist: number, offsPtr: number;
+      let i: number;
 
-      sym -= 257;
+      const symAdj = sym - 257;
 
       /* possibly get more bits from length code */
-      length = tinf_read_bits(d, length_bits[sym], length_base[sym]);
+      length = tinf_read_bits(d, length_bits[symAdj], length_base[symAdj]);
 
       dist = tinf_decode_symbol(d, dt);
 
       /* possibly get more bits from distance code */
-      offs = d.destLen - tinf_read_bits(d, dist_bits[dist], dist_base[dist]);
+      offsPtr = d.destLen - tinf_read_bits(d, dist_bits[dist], dist_base[dist]);
 
       /* copy match */
-      for (i = offs; i < offs + length; ++i) {
+      for (i = offsPtr; i < offsPtr + length; ++i) {
         d.dest[d.destLen++] = d.dest[i];
       }
     }
@@ -277,9 +373,15 @@ function tinf_inflate_block_data(d, lt, dt) {
 }
 
 /* inflate an uncompressed block of data */
-function tinf_inflate_uncompressed_block(d) {
-  var length, invlength;
-  var i;
+/**
+ * Inflates an uncompressed block of data.
+ * 
+ * @param d - The inflation state.
+ * @returns TINF_OK (0) on success, or TINF_DATA_ERROR (-3) on error.
+ */
+function tinf_inflate_uncompressed_block(d: Data) {
+  let length, invlength;
+  let i;
   
   /* unread from bitbuffer */
   while (d.bitcount > 8) {
@@ -311,10 +413,17 @@ function tinf_inflate_uncompressed_block(d) {
   return TINF_OK;
 }
 
-/* inflate stream from source to dest */
-function tinf_uncompress(source, dest) {
-  var d = new Data(source, dest);
-  var bfinal, btype, res;
+/**
+ * Decompresses data using the DEFLATE algorithm.
+ * 
+ * @param source - The compressed source data as a Uint8Array.
+ * @param dest - The destination buffer for decompressed data as a Uint8Array.
+ * @returns A subarray of the destination buffer containing only the decompressed data.
+ * @throws Error if a data error is encountered during decompression.
+ */
+export default function inflate(source: Uint8Array, dest: Uint8Array): Uint8Array {
+  const d = new Data(source, dest);
+  let bfinal, btype, res;
 
   do {
     /* read final block flag */
@@ -348,10 +457,7 @@ function tinf_uncompress(source, dest) {
   } while (!bfinal);
 
   if (d.destLen < d.dest.length) {
-    if (typeof d.dest.slice === 'function')
-      return d.dest.slice(0, d.destLen);
-    else
-      return d.dest.subarray(0, d.destLen);
+    return d.dest.subarray(0, d.destLen);
   }
   
   return d.dest;
@@ -371,5 +477,3 @@ tinf_build_bits_base(dist_bits, dist_base, 2, 1);
 /* fix a special case */
 length_bits[28] = 0;
 length_base[28] = 258;
-
-module.exports = tinf_uncompress;
