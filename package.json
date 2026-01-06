@@ -1,5 +1,5 @@
 {
-  "name": "@quarksb/tiny-inflate",
+  "name": "@kuake/tiny-inflate",
   "version": "2.0.0",
   "description": "A tiny inflate implementation (Modern ESM/TS version)",
   "type": "module",

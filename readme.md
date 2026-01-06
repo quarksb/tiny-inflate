@@ -1,4 +1,4 @@
-# @quarksb/tiny-inflate
+# @kuake/tiny-inflate
 
 > This is a modernized fork of the original [tiny-inflate](https://github.com/devongovett/tiny-inflate) by Devon Govett.
 
@@ -16,9 +16,9 @@ Minified it is about 3KB. While being very small, it is also reasonably fast (ab
 ## Installation
 
 ```bash
-bun add @quarksb/tiny-inflate
+bun add @kuake/tiny-inflate
 # or
-npm install @quarksb/tiny-inflate
+npm install @kuake/tiny-inflate
 ```
 
 ## Example
@@ -26,7 +26,7 @@ npm install @quarksb/tiny-inflate
 To use tiny-inflate, you need two things: a buffer of data compressed with deflate, and the decompressed size (often stored in a file header) to allocate your output buffer. Input and output buffers can be `Uint8Array` or Node.js `Buffer`.
 
 ```typescript
-import inflate from '@quarksb/tiny-inflate';
+import inflate from '@kuake/tiny-inflate';
 
 const compressed = new Uint8Array([ ... ]);
 const decompressedSize = 1024;
