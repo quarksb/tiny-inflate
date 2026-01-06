@@ -31,7 +31,13 @@
     "gzip",
     "zip"
   ],
-  "author": "quarkcao <https://github.com/quarksb>",
+  "author": {
+    "name": "Devon Govett",
+    "url": "https://github.com/devongovett"
+  },
+  "contributors": [
+    "quarkcao <https://github.com/quarksb>"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/quarksb/tiny-inflate/issues"
