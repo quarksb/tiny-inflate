@@ -1,9 +1,15 @@
 # @kuake/tiny-inflate
 
-> This is a modernized fork of the original [tiny-inflate](https://github.com/devongovett/tiny-inflate) by Devon Govett.
+This project is a modernized, TypeScript-first fork of the excellent [tiny-inflate](https://github.com/devongovett/tiny-inflate) library originally created by **Devon Govett**.
 
-This is a port of Joergen Ibsen's [tiny inflate](https://bitbucket.org/jibsen/tinf) to TypeScript/ESM.
-Minified it is about 3KB. While being very small, it is also reasonably fast (about 30% - 50% slower than [pako](https://github.com/nodeca/pako) on average), and should be good enough for many applications.
+## Background
+
+The core logic is based on Joergen Ibsen's [tiny inflate](https://bitbucket.org/jibsen/tinf) C library, which was ported to JavaScript by Devon Govett. 
+
+As the original JavaScript repository is no longer actively maintained, this fork was created to provide:
+- **TypeScript Support**: Full type definitions for better DX.
+- **ES Modules**: Modern ESM-first exports for build tools like Vite, Bun, and Webpack 5.
+- **Modern Tooling**: Powered by [Bun](https://bun.sh) for ultra-fast testing and building.
 
 ## Features
 
@@ -50,6 +56,14 @@ bun test
 # Build for production
 bun run build
 ```
+
+## Credits
+
+This library originates from the dedicated work of:
+- **[Joergen Ibsen](https://github.com/jibsen)**: Author of the original [tinf](https://bitbucket.org/jibsen/tinf) C library.
+- **[Devon Govett](https://github.com/devongovett)**: Author of the original [tiny-inflate](https://github.com/devongovett/tiny-inflate) JavaScript port.
+
+We thank them for their contributions to the open-source community.
 
 ## License
 
