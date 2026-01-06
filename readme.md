@@ -1,4 +1,6 @@
-# tiny-inflate
+# @quarksb/tiny-inflate
+
+> This is a modernized fork of the original [tiny-inflate](https://github.com/devongovett/tiny-inflate) by Devon Govett.
 
 This is a port of Joergen Ibsen's [tiny inflate](https://bitbucket.org/jibsen/tinf) to TypeScript/ESM.
 Minified it is about 3KB. While being very small, it is also reasonably fast (about 30% - 50% slower than [pako](https://github.com/nodeca/pako) on average), and should be good enough for many applications.
@@ -9,21 +11,22 @@ Minified it is about 3KB. While being very small, it is also reasonably fast (ab
 - **Modern**: Written in TypeScript with ESM support.
 - **Fast**: Optimized for Bun and modern JS engines.
 - **Zero Dependencies**: Core logic has no external dependencies.
+- **Maintenance**: This fork is maintained for modern development environments.
 
 ## Installation
 
 ```bash
-bun add tiny-inflate
+bun add @quarksb/tiny-inflate
 # or
-npm install tiny-inflate
+npm install @quarksb/tiny-inflate
 ```
 
 ## Example
 
-To use tiny-inflate, you need two things: a buffer of data compressed with deflate, and the decompressed size to allocate your output buffer. Input and output buffers can be `Uint8Array` or Node.js `Buffer`.
+To use tiny-inflate, you need two things: a buffer of data compressed with deflate, and the decompressed size (often stored in a file header) to allocate your output buffer. Input and output buffers can be `Uint8Array` or Node.js `Buffer`.
 
 ```typescript
-import inflate from 'tiny-inflate';
+import inflate from '@quarksb/tiny-inflate';
 
 const compressed = new Uint8Array([ ... ]);
 const decompressedSize = 1024;

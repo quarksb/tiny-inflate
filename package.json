@@ -1,14 +1,24 @@
 {
-  "name": "tiny-inflate",
-  "version": "1.1.0",
-  "description": "A tiny inflate implementation",
+  "name": "@quarksb/tiny-inflate",
+  "version": "2.0.0",
+  "description": "A tiny inflate implementation (Modern ESM/TS version)",
   "type": "module",
-  "main": "./index.ts",
-  "module": "./index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
   "types": "./index.ts",
+  "files": [
+    "dist",
+    "index.ts",
+    "readme.md",
+    "LICENSE"
+  ],
   "scripts": {
     "test": "bun test",
-    "build": "bun build ./index.ts --outdir ./dist --minify"
+    "build": "bun build ./index.ts --outdir ./dist --minify",
+    "prepublishOnly": "bun run build && bun test"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "repository": {
     "type": "git",
